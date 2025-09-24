@@ -68,12 +68,6 @@ impl ProgressIndicator {
             return;
         }
 
-        let percentage = if self.total_bytes > 0 {
-            (self.processed_bytes as f64 / self.total_bytes as f64 * 100.0) as u32
-        } else {
-            0
-        };
-
         let elapsed = self.start_time.elapsed();
         let bytes_per_sec = if elapsed.as_secs_f64() > 0.0 {
             self.processed_bytes as f64 / elapsed.as_secs_f64()
@@ -83,25 +77,44 @@ impl ProgressIndicator {
 
         let (rate_value, rate_unit) = format_bytes_per_second(bytes_per_sec);
         let (processed_value, processed_unit) = format_bytes(self.processed_bytes);
-        let (total_value, total_unit) = format_bytes(self.total_bytes);
 
-        // Progress bar
-        let bar_width = 20;
-        let filled = (percentage as usize * bar_width) / 100;
-        let empty = bar_width - filled;
+        if self.total_bytes > 0 {
+            // Known file size - show percentage progress bar
+            let percentage = (self.processed_bytes as f64 / self.total_bytes as f64 * 100.0) as u32;
+            let (total_value, total_unit) = format_bytes(self.total_bytes);
 
-        eprint!(
-            "\r[{}{}] {}% ({:.1} {}/{:.1} {}) {:.1} {}/s",
-            "=".repeat(filled),
-            " ".repeat(empty),
-            percentage,
-            processed_value,
-            processed_unit,
-            total_value,
-            total_unit,
-            rate_value,
-            rate_unit
-        );
+            // Progress bar
+            let bar_width = 20;
+            let filled = (percentage as usize * bar_width) / 100;
+            let empty = bar_width - filled;
+
+            eprint!(
+                "\r[{}{}] {}% ({:.1} {}/{:.1} {}) {:.1} {}/s",
+                "=".repeat(filled),
+                " ".repeat(empty),
+                percentage,
+                processed_value,
+                processed_unit,
+                total_value,
+                total_unit,
+                rate_value,
+                rate_unit
+            );
+        } else {
+            // Unknown file size - show spinner style
+            let spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧'];
+            let spinner_idx = (elapsed.as_millis() / 100) % spinner_chars.len() as u128;
+            let spinner = spinner_chars[spinner_idx as usize];
+
+            eprint!(
+                "\r{} Processing... ({:.1} {}) {:.1} {}/s",
+                spinner,
+                processed_value,
+                processed_unit,
+                rate_value,
+                rate_unit
+            );
+        }
 
         let _ = io::stderr().flush();
     }
@@ -118,12 +131,31 @@ impl ProgressIndicator {
         }
     }
 
+    /// Create a progress indicator for unknown file sizes (e.g., forensic images)
+    /// This enables silent mode even when total_bytes is unknown
+    pub fn new_silent_only(show_progress: bool) -> Self {
+        let now = Instant::now();
+        Self {
+            start_time: now,
+            last_update: now,
+            total_bytes: 0,
+            processed_bytes: 0,
+            enabled: show_progress, // Enable for silent mode even with unknown size
+            show_progress,
+        }
+    }
+
     /// Check if progress should be shown based on output destination
     pub fn should_show_progress() -> bool {
         // Show progress only if stderr is a terminal (not redirected to file)
         use std::os::unix::io::AsRawFd;
         let stderr_fd = io::stderr().as_raw_fd();
         unsafe { libc::isatty(stderr_fd) != 0 }
+    }
+
+    /// Check if output should be silenced (when progress is enabled)
+    pub fn is_silent(&self) -> bool {
+        self.enabled
     }
 }
 

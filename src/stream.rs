@@ -3,6 +3,7 @@ use crate::config::Config;
 use crate::error::Result;
 use crate::forensic_image::{ForensicImageReader, is_forensic_image};
 use crate::output::OutputFormatter;
+use crate::progress::ProgressIndicator;
 use regex::bytes::Regex;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
@@ -43,6 +44,7 @@ impl FileProcessor {
     /// * `limit` - Maximum number of lines to output (0 for unlimited)
     /// * `separator` - String to separate hex bytes
     /// * `show_offset` - Whether to display offset values
+    /// * `progress` - Progress indicator to update during processing
     pub fn process_file_stream_from_path<P: AsRef<Path>>(
         &mut self,
         file_path: P,
@@ -50,6 +52,7 @@ impl FileProcessor {
         limit: usize,
         separator: &str,
         show_offset: bool,
+        progress: &mut ProgressIndicator,
     ) -> Result<()> {
         let file_path = file_path.as_ref();
 
@@ -57,12 +60,12 @@ impl FileProcessor {
             // Process forensic image file (E01, VMDK)
             let mut forensic_reader = ForensicImageReader::new(&file_path)?;
             let file_size = forensic_reader.size();
-            self.process_reader_stream(&mut forensic_reader, width, limit, separator, show_offset, file_size)
+            self.process_reader_stream(&mut forensic_reader, width, limit, separator, show_offset, file_size, progress)
         } else {
             // Process regular file
             let mut file = File::open(&file_path)?;
             let file_size = file.metadata()?.len();
-            self.process_reader_stream(&mut file, width, limit, separator, show_offset, file_size)
+            self.process_reader_stream(&mut file, width, limit, separator, show_offset, file_size, progress)
         }
     }
 
@@ -78,6 +81,7 @@ impl FileProcessor {
     /// * `separator` - String to separate hex bytes
     /// * `show_offset` - Whether to display offset values
     /// * `file_size` - Total size of the file for offset formatting
+    /// * `progress` - Progress indicator to update during processing
     pub fn process_file_stream(
         &mut self,
         file: &mut File,
@@ -86,8 +90,9 @@ impl FileProcessor {
         separator: &str,
         show_offset: bool,
         file_size: u64,
+        progress: &mut ProgressIndicator,
     ) -> Result<()> {
-        self.process_reader_stream(file, width, limit, separator, show_offset, file_size)
+        self.process_reader_stream(file, width, limit, separator, show_offset, file_size, progress)
     }
 
     /// Generic stream processing function that works with any Read + Seek reader
@@ -99,6 +104,7 @@ impl FileProcessor {
         separator: &str,
         show_offset: bool,
         file_size: u64,
+        progress: &mut ProgressIndicator,
     ) -> Result<()> {
         let mut pos = reader.stream_position()?;
         let mut line = 0;
@@ -116,9 +122,12 @@ impl FileProcessor {
             line += 1;
 
             let hex_string = OutputFormatter::format_bytes_as_hex(&buffer[..bytes_read], separator);
-            OutputFormatter::print_line(pos, &hex_string, show_offset, hex_offset_length);
+            OutputFormatter::print_line_with_silent(pos, &hex_string, show_offset, hex_offset_length, progress.is_silent());
 
             pos += bytes_read as u64;
+
+            // Update progress
+            progress.update(bytes_read as u64);
 
             // Check line limit
             if limit > 0 && line >= limit {
@@ -126,6 +135,7 @@ impl FileProcessor {
             }
         }
 
+        progress.finish();
         Ok(())
     }
 
@@ -142,6 +152,7 @@ impl FileProcessor {
     /// * `limit` - Maximum number of matches to output (0 for unlimited)
     /// * `separator` - String to separate hex bytes
     /// * `show_offset` - Whether to display offset values
+    /// * `progress` - Progress indicator to update during processing
     pub fn process_stream_by_regex_from_path<P: AsRef<Path>>(
         &mut self,
         file_path: P,
@@ -150,17 +161,18 @@ impl FileProcessor {
         limit: usize,
         separator: &str,
         show_offset: bool,
+        progress: &mut ProgressIndicator,
     ) -> Result<()> {
         let file_path = file_path.as_ref();
 
         if is_forensic_image(&file_path) {
             // Process forensic image file (E01, VMDK)
             let mut forensic_reader = ForensicImageReader::new(&file_path)?;
-            self.process_reader_by_regex(&mut forensic_reader, regex, width, limit, separator, show_offset)
+            self.process_reader_by_regex(&mut forensic_reader, regex, width, limit, separator, show_offset, progress)
         } else {
             // Process regular file
             let mut file = File::open(&file_path)?;
-            self.process_reader_by_regex(&mut file, regex, width, limit, separator, show_offset)
+            self.process_reader_by_regex(&mut file, regex, width, limit, separator, show_offset, progress)
         }
     }
 
@@ -184,8 +196,9 @@ impl FileProcessor {
         limit: usize,
         separator: &str,
         show_offset: bool,
+        progress: &mut ProgressIndicator,
     ) -> Result<()> {
-        self.process_reader_by_regex(file, regex, width, limit, separator, show_offset)
+        self.process_reader_by_regex(file, regex, width, limit, separator, show_offset, progress)
     }
 
     /// Generic regex processing function that works with any Read + Seek reader
@@ -197,6 +210,7 @@ impl FileProcessor {
         limit: usize,
         separator: &str,
         show_offset: bool,
+        progress: &mut ProgressIndicator,
     ) -> Result<()> {
         let buffer_size = self.config.get_buffer_size(width);
         let buffer_padding = self.config.buffer_padding;
@@ -216,6 +230,9 @@ impl FileProcessor {
             if bytes_read == 0 {
                 break;
             }
+
+            // Update progress
+            progress.update(bytes_read as u64);
 
             // Process regex matches directly without collecting into vector
             let buffer_slice = self.buffer_manager.get_main_slice(0, bytes_read);
@@ -272,7 +289,7 @@ impl FileProcessor {
                     None
                 };
 
-                OutputFormatter::print_line_with_match_highlight(
+                OutputFormatter::print_line_with_match_highlight_silent(
                     new_hit_pos,
                     &hex_string,
                     show_offset,
@@ -280,6 +297,7 @@ impl FileProcessor {
                     crate::color_context::get_color_choice(),
                     match_byte_pos,
                     match_byte_len,
+                    progress.is_silent(),
                 );
                 last_hit_pos = new_hit_pos as i64;
 
@@ -298,6 +316,7 @@ impl FileProcessor {
             }
         }
 
+        progress.finish();
         Ok(())
     }
 
@@ -412,7 +431,8 @@ mod tests {
         let file_size = file.metadata()?.len();
 
         // This would normally print, but in tests we just verify it doesn't error
-        let result = processor.process_file_stream(&mut file, 16, 1, " ", false, file_size);
+        let mut progress = ProgressIndicator::disabled();
+        let result = processor.process_file_stream(&mut file, 16, 1, " ", false, file_size, &mut progress);
         assert!(result.is_ok());
 
         Ok(())

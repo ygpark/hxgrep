@@ -27,6 +27,15 @@ impl OutputFormatter {
 
     /// Print a line with optional offset
     pub fn print_line(offset: u64, hex_data: &str, show_offset: bool, hex_offset_length: usize) {
+        Self::print_line_with_silent(offset, hex_data, show_offset, hex_offset_length, false);
+    }
+
+    /// Print a line with optional offset and silent mode
+    pub fn print_line_with_silent(offset: u64, hex_data: &str, show_offset: bool, hex_offset_length: usize, silent: bool) {
+        if silent {
+            return; // Skip output when in silent mode
+        }
+
         Self::print_line_with_color(
             offset,
             hex_data,
@@ -46,6 +55,24 @@ impl OutputFormatter {
         match_start: Option<usize>,
         match_length: Option<usize>,
     ) {
+        Self::print_line_with_match_highlight_silent(offset, hex_data, show_offset, hex_offset_length, color_choice, match_start, match_length, false);
+    }
+
+    /// Print a line with optional offset and color support, with match highlighting and silent mode
+    pub fn print_line_with_match_highlight_silent(
+        offset: u64,
+        hex_data: &str,
+        show_offset: bool,
+        hex_offset_length: usize,
+        color_choice: &ColorChoice,
+        match_start: Option<usize>,
+        match_length: Option<usize>,
+        silent: bool,
+    ) {
+        if silent {
+            return; // Skip output when in silent mode
+        }
+
         let should_use_color = match color_choice {
             ColorChoice::Always => true,
             ColorChoice::Never => false,

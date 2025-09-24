@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::error::Result;
 use crate::parallel::{ParallelHexDump, ParallelProcessor};
+use crate::progress::ProgressIndicator;
 use crate::regex_processor::RegexProcessor;
 use crate::stream::FileProcessor;
 use glob::glob;
@@ -180,6 +181,7 @@ impl MultiFileProcessor {
                 )?;
             } else {
                 let mut processor = FileProcessor::new(self.config.clone());
+                let mut progress = ProgressIndicator::disabled();
                 processor.process_stream_by_regex(
                     &mut file,
                     &regex,
@@ -187,6 +189,7 @@ impl MultiFileProcessor {
                     limit,
                     separator,
                     show_offset,
+                    &mut progress,
                 )?;
             }
 
@@ -208,6 +211,7 @@ impl MultiFileProcessor {
                 )?;
             } else {
                 let mut processor = FileProcessor::new(self.config.clone());
+                let mut progress = ProgressIndicator::disabled();
                 processor.process_file_stream(
                     &mut file,
                     line_width,
@@ -215,6 +219,7 @@ impl MultiFileProcessor {
                     separator,
                     show_offset,
                     file_size,
+                    &mut progress,
                 )?;
             }
 

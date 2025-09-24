@@ -30,7 +30,7 @@ impl ForensicImageReader {
             )))?;
 
         // Try to create the exhume_body reader
-        let body = match std::panic::catch_unwind(|| {
+        let mut body = match std::panic::catch_unwind(|| {
             exhume_body::Body::new(path_str.to_string(), "auto")
         }) {
             Ok(body) => body,
@@ -42,8 +42,17 @@ impl ForensicImageReader {
             }
         };
 
-        // Get the size if possible
-        let size = 0; // TODO: Get actual size from exhume_body
+        // Get the size - not used for progress but kept for compatibility
+        let size = match body.seek(SeekFrom::End(0)) {
+            Ok(end_pos) => {
+                // Reset position to beginning
+                let _ = body.seek(SeekFrom::Start(0));
+                end_pos
+            }
+            Err(_) => {
+                0 // If seek fails, fall back to 0
+            }
+        };
 
         Ok(ForensicImageReader {
             body,

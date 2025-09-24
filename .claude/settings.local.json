@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo check:*)",
+      "Bash(cargo build:*)",
+      "Bash(dd:*)",
+      "Bash(./target/release/hxgrep test_progress.bin --progress -n 50)",
+      "Bash(timeout:*)",
+      "Bash(./target/release/hxgrep test:*)",
+      "Bash(./target/release/hxgrep test_silent.bin --progress)",
+      "Bash(./target/release/hxgrep test_large_silent.bin --progress)",
+      "Bash(./target/release/hxgrep test_text.bin --progress -e \"Hello\")",
+      "Bash(./target/release/hxgrep test_forensic.bin --progress -n 5)",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

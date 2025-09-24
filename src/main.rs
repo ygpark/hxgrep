@@ -4,6 +4,7 @@ use hxgrep::error::Result;
 use hxgrep::multifile::MultiFileProcessor;
 use hxgrep::output::OutputFormatter;
 use hxgrep::parallel::{ParallelHexDump, ParallelProcessor};
+use hxgrep::progress::ProgressIndicator;
 use hxgrep::regex_processor::RegexProcessor;
 use hxgrep::stream::FileProcessor;
 use clap::Parser;
@@ -68,6 +69,9 @@ fn main() -> Result<()> {
             .unwrap_or("Unknown");
         eprintln!("Detected {} forensic image: {}", format_name, file_path);
 
+        // Forensic images (E01) do not support progress due to exhume_body library limitations
+        let mut progress = ProgressIndicator::disabled();
+
         if let Some(expression) = cli.expression {
             let regex = RegexProcessor::compile_pattern(&expression)?;
             processor.process_stream_by_regex_from_path(
@@ -77,6 +81,7 @@ fn main() -> Result<()> {
                 cli.limit,
                 &cli.separator,
                 !cli.no_offset,
+                &mut progress,
             )?;
         } else {
             processor.process_file_stream_from_path(
@@ -85,6 +90,7 @@ fn main() -> Result<()> {
                 cli.limit,
                 &cli.separator,
                 !cli.no_offset,
+                &mut progress,
             )?;
         }
     } else {
@@ -94,6 +100,14 @@ fn main() -> Result<()> {
 
         // Seek to starting position
         file.seek(SeekFrom::Start(cli.position))?;
+
+        // Create progress indicator if requested
+        let show_progress = cli.show_progress && ProgressIndicator::should_show_progress();
+        let mut progress = if show_progress {
+            ProgressIndicator::new(file_size - cli.position, true)
+        } else {
+            ProgressIndicator::disabled()
+        };
 
         // Process file with or without regex
         if let Some(expression) = cli.expression {
@@ -120,6 +134,7 @@ fn main() -> Result<()> {
                     cli.limit,
                     &cli.separator,
                     !cli.no_offset,
+                    &mut progress,
                 )?;
             }
         } else {
@@ -143,6 +158,7 @@ fn main() -> Result<()> {
                     &cli.separator,
                     !cli.no_offset,
                     file_size,
+                    &mut progress,
                 )?;
             }
         }
