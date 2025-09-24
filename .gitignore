@@ -1,0 +1,61 @@
+# Rust build artifacts
+/target/
+Cargo.lock
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and runtime data
+*.log
+*.pid
+*.seed
+*.pid.lock
+pids
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# Test data
+test_data/
+*.test
+test_*.bin
+*.bin
+
+# Documentation and coverage
+/doc/
+tarpaulin-report.html
+lcov.info
+coverage/
+
+# Profiling
+flamegraph.svg
+perf.data*
+
+# Build artifacts (cross-platform)
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Local configuration
+.env
+.env.local
+
+# Editor temporary files
+.#*
+\#*#
