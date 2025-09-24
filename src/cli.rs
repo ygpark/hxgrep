@@ -39,8 +39,8 @@ pub struct Cli {
     pub separator: String,
 
     /// 오프셋 출력 안함
-    #[arg(long = "hideoffset")]
-    pub hide_offset: bool,
+    #[arg(long = "nooffset")]
+    pub no_offset: bool,
 
     /// 병렬 처리 사용 (큰 파일에서 성능 향상)
     #[arg(short = 'p', long = "parallel")]

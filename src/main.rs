@@ -48,7 +48,7 @@ fn main() -> Result<()> {
             cli.line_width,
             cli.limit,
             &cli.separator,
-            !cli.hide_offset,
+            !cli.no_offset,
             cli.parallel,
             cli.chunk_size,
             cli.global_limit,
@@ -76,7 +76,7 @@ fn main() -> Result<()> {
                 cli.line_width,
                 cli.limit,
                 &cli.separator,
-                !cli.hide_offset,
+                !cli.no_offset,
             )?;
         } else {
             processor.process_file_stream_from_path(
@@ -84,7 +84,7 @@ fn main() -> Result<()> {
                 cli.line_width,
                 cli.limit,
                 &cli.separator,
-                !cli.hide_offset,
+                !cli.no_offset,
             )?;
         }
     } else {
@@ -108,7 +108,7 @@ fn main() -> Result<()> {
                     cli.line_width,
                     cli.limit,
                     &cli.separator,
-                    !cli.hide_offset,
+                    !cli.no_offset,
                     file_size,
                 )?;
             } else {
@@ -119,7 +119,7 @@ fn main() -> Result<()> {
                     cli.line_width,
                     cli.limit,
                     &cli.separator,
-                    !cli.hide_offset,
+                    !cli.no_offset,
                 )?;
             }
         } else {
@@ -131,7 +131,7 @@ fn main() -> Result<()> {
                     cli.line_width,
                     cli.limit,
                     &cli.separator,
-                    !cli.hide_offset,
+                    !cli.no_offset,
                     file_size,
                 )?;
             } else {
@@ -141,7 +141,7 @@ fn main() -> Result<()> {
                     cli.line_width,
                     cli.limit,
                     &cli.separator,
-                    !cli.hide_offset,
+                    !cli.no_offset,
                     file_size,
                 )?;
             }
@@ -197,7 +197,7 @@ fn process_stdin_with_regex(
         OutputFormatter::print_line(
             match_offset,
             &hex_string,
-            !cli.hide_offset,
+            !cli.no_offset,
             hex_offset_length,
         );
 
@@ -221,7 +221,7 @@ fn process_stdin_hex_dump(data: &[u8], cli: &Cli, data_size: u64) -> Result<()> 
         let line_bytes = &data[pos..end_pos];
 
         let hex_string = OutputFormatter::format_bytes_as_hex(line_bytes, &cli.separator);
-        OutputFormatter::print_line(pos as u64, &hex_string, !cli.hide_offset, hex_offset_length);
+        OutputFormatter::print_line(pos as u64, &hex_string, !cli.no_offset, hex_offset_length);
 
         pos += cli.line_width;
         line += 1;

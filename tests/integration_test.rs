@@ -90,14 +90,14 @@ fn test_hex_display_with_limit() {
 }
 
 #[test]
-fn test_hide_offset() {
+fn test_no_offset() {
     let binary_path = get_binary_path();
     let test_data = b"Test";
     let test_file = create_test_file(test_data);
 
     let output = Command::new(&binary_path)
         .arg(&test_file)
-        .arg("--hideoffset")
+        .arg("--nooffset")
         .output()
         .expect("Failed to execute command");
 
@@ -121,7 +121,7 @@ fn test_custom_separator() {
         .arg(&test_file)
         .arg("-t")
         .arg("-")
-        .arg("--hideoffset")
+        .arg("--nooffset")
         .output()
         .expect("Failed to execute command");
 
@@ -322,7 +322,7 @@ fn test_help_output() {
     assert!(stdout.contains("-e, --regex"));
     assert!(stdout.contains("-w, --width"));
     assert!(stdout.contains("-n, --line"));
-    assert!(stdout.contains("--hideoffset"));
+    assert!(stdout.contains("--nooffset"));
 }
 
 #[test]
