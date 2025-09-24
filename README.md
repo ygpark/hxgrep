@@ -53,7 +53,7 @@ hxgrep file.bin -w 8
 | `-n, --line <N>`        | 출력할 줄 수 제한 (0: 무제한)         |
 | `-s, --position <N>`    | 시작 위치 (바이트 단위)               |
 | `-t, --separator <STR>` | 바이트 구분자 (기본값: 공백)          |
-| `--nooffset`            | 오프셋 숨기기                         |
+| `--no-offset`           | 오프셋 숨기기                         |
 | `--parallel`            | 병렬 처리 활성화                      |
 | `--multi-file`          | 멀티파일 모드                         |
 

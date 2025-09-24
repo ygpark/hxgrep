@@ -332,7 +332,7 @@ fn test_concurrent_with_different_options() {
         ("with_limit", vec!["-e", "\\x11\\x22\\x33\\x44", "-n", "1"]),
         (
             "no_offset",
-            vec!["-e", "\\x11\\x22\\x33\\x44", "--nooffset"],
+            vec!["-e", "\\x11\\x22\\x33\\x44", "--no-offset"],
         ),
     ];
 

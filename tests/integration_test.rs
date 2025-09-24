@@ -97,7 +97,7 @@ fn test_no_offset() {
 
     let output = Command::new(&binary_path)
         .arg(&test_file)
-        .arg("--nooffset")
+        .arg("--no-offset")
         .output()
         .expect("Failed to execute command");
 
@@ -121,7 +121,7 @@ fn test_custom_separator() {
         .arg(&test_file)
         .arg("-t")
         .arg("-")
-        .arg("--nooffset")
+        .arg("--no-offset")
         .output()
         .expect("Failed to execute command");
 
@@ -322,7 +322,7 @@ fn test_help_output() {
     assert!(stdout.contains("-e, --regex"));
     assert!(stdout.contains("-w, --width"));
     assert!(stdout.contains("-n, --line"));
-    assert!(stdout.contains("--nooffset"));
+    assert!(stdout.contains("--no-offset"));
 }
 
 #[test]

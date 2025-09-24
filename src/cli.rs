@@ -39,7 +39,7 @@ pub struct Cli {
     pub separator: String,
 
     /// 오프셋 출력 안함
-    #[arg(long = "nooffset")]
+    #[arg(long = "no-offset")]
     pub no_offset: bool,
 
     /// 병렬 처리 사용 (큰 파일에서 성능 향상)
