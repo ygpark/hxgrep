@@ -94,16 +94,19 @@ impl RegexProcessor {
 
     /// Escape bytes for regex use
     ///
-    /// Converts a byte array into a regex-compatible string where each byte
-    /// is represented as \xHH format.
+    /// Converts a byte array into a regex-compatible string that disables Unicode mode
+    /// to ensure literal byte matching without UTF-8 interpretation.
     pub fn escape_bytes_for_regex(bytes: &[u8]) -> String {
-        bytes
+        let escaped = bytes
             .iter()
             .map(|&b| {
-                // All bytes are escaped as \xHH for binary regex
+                // Use \xHH format for literal bytes
                 format!("\\x{:02x}", b)
             })
-            .collect()
+            .collect::<String>();
+
+        // Disable Unicode mode to force literal byte matching
+        format!("(?-u){}", escaped)
     }
 
     /// Check if pattern contains regex metacharacters
@@ -242,5 +245,21 @@ mod tests {
         assert!(RegexProcessor::has_regex_metacharacters("\\x58{2}"));
         assert!(RegexProcessor::has_regex_metacharacters("\\x58+"));
         assert!(!RegexProcessor::has_regex_metacharacters("\\x58\\x59"));
+    }
+
+    #[test]
+    fn test_utf8_pattern_fix() {
+        // Test case for UTF-8 interpretation issue fix
+        let pattern = "\\x00\\x00\\xba";
+        let regex = RegexProcessor::compile_pattern(pattern).unwrap();
+
+        // Test data: exact pattern should match
+        let test_data1 = vec![0x00, 0x00, 0xba, 0xAA];
+        // Test data: UTF-8 encoded version should NOT match
+        let test_data2 = vec![0x00, 0x00, 0xc2, 0xba, 0xAA];
+
+        assert_eq!(RegexProcessor::parse_hex_pattern(pattern).unwrap(), vec![0x00, 0x00, 0xba]);
+        assert!(regex.is_match(&test_data1), "Exact pattern should match");
+        assert!(!regex.is_match(&test_data2), "UTF-8 encoded pattern should not match");
     }
 }
