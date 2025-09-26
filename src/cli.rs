@@ -46,8 +46,8 @@ pub struct Cli {
     #[arg(short = 'p', long = "parallel")]
     pub parallel: bool,
 
-    /// 청크 크기 (병렬 처리 시, 바이트 단위, 기본값: 1MB)
-    #[arg(long = "chunk-size", default_value = "1048576")]
+    /// 청크 크기 (병렬 처리 시, 바이트 단위, 기본값: 8MB)
+    #[arg(long = "chunk-size", default_value = "8388608")]
     pub chunk_size: usize,
 
     /// 다중 파일 모드 (glob 패턴 또는 여러 파일 처리)

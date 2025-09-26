@@ -225,7 +225,7 @@ mod tests {
     fn test_escape_bytes_for_regex_basic() {
         let bytes = vec![0x00, 0x01, 0x41, 0xFF];
         let result = RegexProcessor::escape_bytes_for_regex(&bytes);
-        assert_eq!(result, "\\x00\\x01\\x41\\xff");
+        assert_eq!(result, "(?-u)\\x00\\x01\\x41\\xff");
     }
 
     #[test]

@@ -92,6 +92,13 @@ impl BufferManager {
     pub fn get_extra_slice(&self, size: usize) -> &[u8] {
         &self.extra_buffer[..size]
     }
+
+    /// Get the size of the main buffer
+    ///
+    /// Returns the capacity of the main buffer used for file reading operations.
+    pub fn get_buffer_size(&self) -> usize {
+        self.main_buffer.len()
+    }
 }
 
 #[cfg(test)]

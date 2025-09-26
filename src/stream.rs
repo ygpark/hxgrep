@@ -220,7 +220,8 @@ impl FileProcessor {
 
         // For EWF files, we need to get size differently
         // For now, we'll use a large default for generic readers
-        let file_size = 1024 * 1024 * 1024 * 1024u64; // 1TB default
+        const FORENSIC_IMAGE_DEFAULT_SIZE: u64 = 1024 * 1024 * 1024 * 1024; // 1TB default
+        let file_size = FORENSIC_IMAGE_DEFAULT_SIZE;
         let hex_offset_length = OutputFormatter::calculate_hex_offset_length(file_size);
 
         loop {
@@ -261,11 +262,18 @@ impl FileProcessor {
                     continue;
                 }
 
-                // Handle buffer overflow - seek to match position if needed
-                if match_start + width > bytes_read && bytes_read == buffer_size {
-                    reader.seek(SeekFrom::Start(new_hit_pos))?;
-                    last_hit_pos = new_hit_pos as i64;
-                    break;
+                // Handle buffer boundary cases safely
+                // Check if the match extends beyond the current buffer and we're at buffer capacity
+                if let Some(overflow_pos) = match_start.checked_add(width) {
+                    if overflow_pos > bytes_read && bytes_read == self.buffer_manager.get_buffer_size() {
+                        // Pattern extends beyond buffer - need to seek to match position for complete read
+                        reader.seek(SeekFrom::Start(new_hit_pos))?;
+                        last_hit_pos = new_hit_pos as i64;
+                        break;
+                    }
+                } else {
+                    // Integer overflow would occur - skip this match
+                    continue;
                 }
 
                 line += 1;
@@ -414,7 +422,7 @@ mod tests {
     fn test_file_processor_creation() {
         let config = Config::default();
         let processor = FileProcessor::new(config);
-        assert_eq!(processor.config.buffer_size, 64 * 1024);
+        assert_eq!(processor.config.buffer_size, 2 * 1024 * 1024);
     }
 
     #[test]

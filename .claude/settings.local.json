@@ -12,7 +12,19 @@
       "Bash(./target/release/hxgrep test_text.bin --progress -e \"Hello\")",
       "Bash(./target/release/hxgrep test_forensic.bin --progress -n 5)",
       "WebSearch",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(./target/release/hxgrep sample/hikvision.dd -e \"\\x00\\x00\\xba\" -n 3)",
+      "Bash(mkdir:*)",
+      "Bash(./target/release/hxgrep sample/test.bin -e \"\\x00\\x00\\xba\")",
+      "Bash(./target/release/hxgrep sample/test.bin -e \"\\x00\\x00\\xc2\\xba\")",
+      "Bash(./target/release/hxgrep - -e \"\\x00\\x00\\xba\")",
+      "Bash(printf '\\x00\\x00\\xba\\xAA\\xBB\\xCC')",
+      "Bash(./target/release/hxgrep /dev/stdin -e \"\\x00\\x00\\xba\")",
+      "Bash(./target/release/hxgrep sample/exact.bin -e \"\\x00\\x00\\xba\")",
+      "Bash(rustc:*)",
+      "Bash(cargo test:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

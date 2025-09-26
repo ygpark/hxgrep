@@ -6,6 +6,7 @@ pub enum BingrepError {
     Io(io::Error),
     InvalidPattern(String),
     InvalidWidth(usize),
+    InvalidPath(String),
     RegexCompilation(String),
     GlobPattern(String),
     GlobPath(String),
@@ -26,6 +27,7 @@ impl fmt::Display for BingrepError {
                     config.get_max_width()
                 )
             }
+            BingrepError::InvalidPath(msg) => write!(f, "Invalid file path: {}", msg),
             BingrepError::RegexCompilation(msg) => write!(f, "Regex compilation error: {}", msg),
             BingrepError::GlobPattern(msg) => write!(f, "Glob pattern error: {}", msg),
             BingrepError::GlobPath(msg) => write!(f, "Glob path error: {}", msg),

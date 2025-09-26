@@ -92,7 +92,12 @@ impl ParallelProcessor {
             }
 
             // Move to next chunk (without overlap to avoid double processing)
-            current_pos += chunk_size as u64;
+            if let Some(new_pos) = current_pos.checked_add(chunk_size as u64) {
+                current_pos = new_pos;
+            } else {
+                // Overflow would occur - we've reached the end
+                break;
+            }
         }
 
         // Sort matches by offset and print

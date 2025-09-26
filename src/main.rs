@@ -10,6 +10,37 @@ use hxgrep::stream::FileProcessor;
 use clap::Parser;
 use std::fs::File;
 use std::io::{self, Read, Seek, SeekFrom};
+use std::path::{Path, PathBuf};
+
+/// Validate and canonicalize file path to prevent path traversal attacks
+fn validate_file_path(path: &str) -> Result<PathBuf> {
+    let path = Path::new(path);
+
+    // Check for potentially dangerous path components
+    if path.components().any(|component| {
+        matches!(component, std::path::Component::ParentDir)
+    }) {
+        return Err(hxgrep::error::BingrepError::InvalidPath(
+            "Path contains parent directory references (..)".to_string()
+        ));
+    }
+
+    // Canonicalize the path to resolve any symlinks and relative paths
+    match path.canonicalize() {
+        Ok(canonical_path) => Ok(canonical_path),
+        Err(_) => {
+            // If canonicalization fails, it might be because the file doesn't exist
+            // In this case, we'll validate the path structure but allow it through
+            if path.is_absolute() || path.components().count() == 1 {
+                Ok(path.to_path_buf())
+            } else {
+                Err(hxgrep::error::BingrepError::InvalidPath(
+                    "Invalid or inaccessible file path".to_string()
+                ))
+            }
+        }
+    }
+}
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -24,7 +55,8 @@ fn main() -> Result<()> {
                 // Handle stdin input
                 return handle_stdin_input(&cli);
             }
-            path.clone()
+            // Validate file path for security
+            validate_file_path(path)?
         }
         None => {
             // Clap will automatically show help when no file path is provided
@@ -44,7 +76,7 @@ fn main() -> Result<()> {
         let multi_processor = MultiFileProcessor::new(config);
 
         return multi_processor.process_files_by_glob(
-            &file_path,
+            &file_path.to_string_lossy(),
             cli.expression.as_deref(),
             cli.line_width,
             cli.limit,
@@ -60,14 +92,14 @@ fn main() -> Result<()> {
     let config = Config::default();
     config.validate_cli(&cli)?;
 
-    let mut processor = FileProcessor::new(config);
+    let mut processor = FileProcessor::new(config.clone());
 
     // Check if this is a forensic image file (E01, VMDK) and handle accordingly
     if hxgrep::forensic_image::is_forensic_image(&file_path) {
         // Process forensic image file - parallel processing not supported for forensic images yet
         let format_name = hxgrep::forensic_image::get_format_name(&file_path)
             .unwrap_or("Unknown");
-        eprintln!("Detected {} forensic image: {}", format_name, file_path);
+        eprintln!("Detected {} forensic image: {}", format_name, file_path.display());
 
         // Forensic images (E01) do not support progress due to exhume_body library limitations
         let mut progress = ProgressIndicator::disabled();
@@ -97,6 +129,9 @@ fn main() -> Result<()> {
         // Open regular file
         let mut file = File::open(&file_path)?;
         let file_size = file.metadata()?.len();
+
+        // Validate file size doesn't exceed limits
+        config.validate_file_size(file_size)?;
 
         // Seek to starting position
         file.seek(SeekFrom::Start(cli.position))?;
