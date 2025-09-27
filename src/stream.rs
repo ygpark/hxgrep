@@ -422,7 +422,7 @@ mod tests {
     fn test_file_processor_creation() {
         let config = Config::default();
         let processor = FileProcessor::new(config);
-        assert_eq!(processor.config.buffer_size, 2 * 1024 * 1024);
+        assert_eq!(processor.config.buffer_size, 4 * 1024 * 1024);
     }
 
     #[test]

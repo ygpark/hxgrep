@@ -24,7 +24,11 @@
       "Bash(rustc:*)",
       "Bash(cargo test:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebFetch(domain:serverfault.com)",
+      "WebFetch(domain:www.zabkat.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:storageswiss.com)"
     ],
     "deny": [],
     "ask": []

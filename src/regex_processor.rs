@@ -262,4 +262,31 @@ mod tests {
         assert!(regex.is_match(&test_data1), "Exact pattern should match");
         assert!(!regex.is_match(&test_data2), "UTF-8 encoded pattern should not match");
     }
+
+    #[cfg(test)]
+    #[test]
+    fn test_utf8_pattern_with_file() {
+        use tempfile::NamedTempFile;
+        use std::io::Write;
+
+        // Create temporary files with UTF-8 test data
+        let mut temp_file1 = NamedTempFile::new().unwrap();
+        let mut temp_file2 = NamedTempFile::new().unwrap();
+
+        // Write exact pattern and UTF-8 pattern to separate files
+        temp_file1.write_all(&[0x00, 0x00, 0xba, 0xAA]).unwrap();
+        temp_file2.write_all(&[0x00, 0x00, 0xc2, 0xba, 0xAA]).unwrap();
+
+        let pattern = "\\x00\\x00\\xba";
+        let regex = RegexProcessor::compile_pattern(pattern).unwrap();
+
+        // Read files and test pattern matching
+        let data1 = std::fs::read(temp_file1.path()).unwrap();
+        let data2 = std::fs::read(temp_file2.path()).unwrap();
+
+        assert!(regex.is_match(&data1), "File with exact pattern should match");
+        assert!(!regex.is_match(&data2), "File with UTF-8 pattern should not match");
+
+        // Files are automatically deleted when NamedTempFile goes out of scope
+    }
 }

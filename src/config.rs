@@ -15,8 +15,9 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            buffer_size: 2 * 1024 * 1024,     // 2MB for optimal disk read performance
-            buffer_padding: 4096,              // 4KB padding for pattern boundaries
+            // Optimized for modern NVMe SSDs (1-4MB range) while maintaining compatibility
+            buffer_size: 4 * 1024 * 1024,     // 4MB for optimal NVMe/SSD read performance
+            buffer_padding: 8192,              // 8KB padding for better pattern boundary handling
             max_line_width: 8192,              // Maximum bytes per line
             min_line_width: 1,                 // Minimum bytes per line
             max_file_size: 100 * 1024 * 1024 * 1024u64, // 100GB maximum file size
